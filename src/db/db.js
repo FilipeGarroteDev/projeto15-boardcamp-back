@@ -4,9 +4,9 @@ const { Pool } = pg;
 
 const connection = new Pool({
   connectionString: process.env.DATABASE_URL,
-  user: process.env.DATABASE_USER,
-  password: process.env.DATABASE_PASSWORD,
-  database: process.env.DATABASE,
+  user: 'postgres',
+  password: '123456',
+  database: 'boardcamp',
 });
 
 export { connection };
