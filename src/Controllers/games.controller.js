@@ -1,9 +1,14 @@
 import { connection } from '../db/db.js';
 
-async function listCategories(req, res) {
+async function listGames(req, res) {
+  const { name } = req.query;
+
   try {
-    const categories = await connection.query('SELECT * FROM categories');
-    return res.status(200).send(categories.rows);
+    const games = await connection.query(
+      'SELECT * FROM games WHERE name LIKE $1',
+      [`${name}%`]
+    );
+    return res.status(200).send(games.rows);
   } catch (error) {
     return res.status(400).send(error.message);
   }
@@ -38,4 +43,4 @@ async function createCategory(req, res) {
   }
 }
 
-export { listCategories, createCategory };
+export { listGames, createCategory };
