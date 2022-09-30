@@ -8,10 +8,17 @@ async function listGames(req, res) {
   try {
     name
       ? (games = await connection.query(
-          'SELECT * FROM games WHERE name ILIKE $1',
+          `SELECT games.*, categories.name AS "categoryName" 
+          FROM games 
+          JOIN categories ON games."categoryId" = categories.id 
+          WHERE games.name ILIKE $1`,
           [`${name}%`]
         ))
-      : (games = await connection.query('SELECT * FROM games'));
+      : (games = await connection.query(
+          `SELECT games.*, categories.name AS "categoryName" 
+          FROM games 
+          JOIN categories ON games."categoryId" = categories.id`
+        ));
     return res.status(200).send(games.rows);
   } catch (error) {
     return res.status(400).send(error.message);
