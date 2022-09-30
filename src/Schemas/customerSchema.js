@@ -6,12 +6,14 @@ const customerSchema = joi.object({
     .string()
     .pattern(/^[0-9]+$/)
     .min(10)
-    .max(11),
+    .max(11)
+    .required(),
   cpf: joi
     .string()
     .pattern(/^[0-9]+$/)
-    .length(11),
-  birthday: joi.date().less('now').greater('1899-12-31'),
+    .length(11)
+    .required(),
+  birthday: joi.date().less('now').greater('1899-12-31').required(),
 });
 
 export { customerSchema };
