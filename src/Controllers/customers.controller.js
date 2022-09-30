@@ -79,4 +79,45 @@ async function createCustomer(req, res) {
   }
 }
 
-export { listCustomers, listSpecificUser, createCustomer };
+async function updateUserData(req, res) {
+  const { name, phone, cpf, birthday } = req.body;
+  const validation = customerSchema.validate(req.body, { abortEarly: false });
+  const { id } = req.params;
+
+  if (validation.error) {
+    const errors = validation.error.details
+      .map((error) => error.message)
+      .join('\n');
+    return res
+      .status(400)
+      .send(
+        `Por gentileza, revise os campos preenchidos. Ocorreram os seguintes erros:\n\n${errors}`
+      );
+  }
+
+  try {
+    const hasUser = await connection.query(
+      'SELECT * FROM customers WHERE cpf = $1',
+      [cpf]
+    );
+
+    if (hasUser.rows[0]) {
+      return res
+        .status(409)
+        .send(
+          'Já existe um usuário com esse CPF.\nPor gentileza, revise o número informado.'
+        );
+    }
+
+    await connection.query(
+      'UPDATE customers SET name = $1, phone = $2, cpf = $3, birthday = $4 WHERE id = $5',
+      [name, phone, cpf, birthday, Number(id)]
+    );
+
+    return res.sendStatus(200);
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+}
+
+export { listCustomers, listSpecificUser, createCustomer, updateUserData };
