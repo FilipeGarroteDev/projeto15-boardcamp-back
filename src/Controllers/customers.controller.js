@@ -17,4 +17,18 @@ async function listCustomers(req, res) {
   }
 }
 
-export { listCustomers };
+async function listSpecificUser(req, res) {
+  const { id } = req.params;
+
+  try {
+    const customer = await connection.query(
+          'SELECT * FROM customers WHERE name = $1',
+          [Number(id)]
+        )
+    return res.status(200).send(customer.rows[0]);
+  } catch (error) {
+    return res.status(400).send(error.message);
+  }
+}
+
+export { listCustomers, listSpecificUser };
