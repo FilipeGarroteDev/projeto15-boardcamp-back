@@ -3,12 +3,15 @@ import { gameSchema } from '../Schemas/gameSchema.js';
 
 async function listGames(req, res) {
   const { name } = req.query;
+  let games;
 
   try {
-    const games = await connection.query(
-      'SELECT * FROM games WHERE name ILIKE $1',
-      [`${name}%`]
-    );
+    name
+      ? (games = await connection.query(
+          'SELECT * FROM games WHERE name ILIKE $1',
+          [`${name}%`]
+        ))
+      : (games = await connection.query('SELECT * FROM games'));
     return res.status(200).send(games.rows);
   } catch (error) {
     return res.status(400).send(error.message);
