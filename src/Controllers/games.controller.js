@@ -1,11 +1,12 @@
 import { connection } from '../db/db.js';
+import { gameSchema } from '../Schemas/gameSchema.js';
 
 async function listGames(req, res) {
   const { name } = req.query;
 
   try {
     const games = await connection.query(
-      'SELECT * FROM games WHERE name LIKE $1',
+      'SELECT * FROM games WHERE name ILIKE $1',
       [`${name}%`]
     );
     return res.status(200).send(games.rows);
@@ -14,33 +15,57 @@ async function listGames(req, res) {
   }
 }
 
-async function createCategory(req, res) {
-  const { name } = req.body;
+async function createGame(req, res) {
+  const { name, image, stockTotal, categoryId, pricePerDay } = req.body;
+  const validation = gameSchema.validate(req.body, { abortEarly: false });
 
-  if (!name) {
-    return res.status(400).send('O nome da categoria não pode estar vazio');
+  if (validation.error) {
+    const errors = validation.error.details
+      .map((error) => error.message)
+      .join('\n');
+    return res
+      .status(400)
+      .send(
+        `Por gentileza, revise os campos preenchidos. Ocorreram os seguintes erros:\n\n${errors}`
+      );
   }
 
   try {
     const hasCategory = await connection.query(
-      'SELECT * FROM categories WHERE name = $1',
-      [name]
+      'SELECT * FROM categories WHERE id = $1',
+      [categoryId]
     );
 
-    if (hasCategory.rows[0]) {
+    if (!hasCategory.rows[0]) {
       return res
-        .status(409)
+        .status(400)
         .send(
-          'Esse nome de categoria já existe.\nPor gentileza, escolha outro nome.'
+          'Não existe uma categoria com esse id.\nPor gentileza, revise o valor informado.'
         );
     }
 
-    await connection.query('INSERT INTO categories (name) VALUES($1)', [name]);
+    const hasGame = await connection.query(
+      'SELECT * FROM games WHERE name = $1',
+      [name]
+    );
 
-    return res.sendStatus(200);
+    if (hasGame.rows[0]) {
+      return res
+        .status(409)
+        .send(
+          'Esse nome de jogo já existe.\nPor gentileza, escolha outro nome.'
+        );
+    }
+
+    await connection.query(
+      'INSERT INTO games (name, image, "stockTotal", "categoryId", "pricePerDay") VALUES($1, $2, $3, $4, $5)',
+      [name, image, stockTotal, categoryId, pricePerDay]
+    );
+
+    return res.sendStatus(201);
   } catch (error) {
     res.status(400).send(error.message);
   }
 }
 
-export { listGames, createCategory };
+export { listGames, createGame };

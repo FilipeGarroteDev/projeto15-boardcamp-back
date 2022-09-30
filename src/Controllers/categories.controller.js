@@ -32,7 +32,7 @@ async function createCategory(req, res) {
 
     await connection.query('INSERT INTO categories (name) VALUES($1)', [name]);
 
-    return res.sendStatus(200);
+    return res.sendStatus(201);
   } catch (error) {
     res.status(400).send(error.message);
   }
