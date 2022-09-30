@@ -22,9 +22,15 @@ async function listSpecificUser(req, res) {
 
   try {
     const customer = await connection.query(
-          'SELECT * FROM customers WHERE name = $1',
-          [Number(id)]
-        )
+      'SELECT * FROM customers WHERE name = $1',
+      [id]
+    );
+    if (customer.rows.length === 0) {
+      return res
+        .status(404)
+        .send('Esse usuário não existe. Favor informar um id correto.');
+    }
+
     return res.status(200).send(customer.rows[0]);
   } catch (error) {
     return res.status(400).send(error.message);
