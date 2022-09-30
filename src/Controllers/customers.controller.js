@@ -97,8 +97,8 @@ async function updateUserData(req, res) {
 
   try {
     const hasUser = await connection.query(
-      'SELECT * FROM customers WHERE cpf = $1',
-      [cpf]
+      'SELECT * FROM customers WHERE cpf = $1 AND id <> $2',
+      [cpf, Number(id)]
     );
 
     if (hasUser.rows[0]) {
