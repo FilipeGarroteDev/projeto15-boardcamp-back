@@ -196,4 +196,36 @@ async function gameReturn(req, res) {
   }
 }
 
-export { newGameRent, listRentals, gameReturn };
+async function deleteRent(req, res) {
+  const { id } = req.params;
+
+  try {
+    const rental = await connection.query(
+      'SELECT * FROM rentals WHERE id = $1',
+      [id]
+    );
+
+    if (rental.rows.length === 0) {
+      return res
+        .status(404)
+        .send(
+          'Não existe nenhum aluguel com o id informado.\nPor favor, revise os dados.'
+        );
+    }
+
+    if (rental.rows[0].returnDate === null) {
+      return res
+        .status(400)
+        .send(
+          `Esse aluguel ainda não foi finalizado.\nAntes de deletar o registro, finalize o aluguel.`
+        );
+    }
+
+    await connection.query('DELETE FROM rentals WHERE id = $1;', [id]);
+    return res.sendStatus(200);
+  } catch (error) {
+    return res.status(400).sendo(error.message);
+  }
+}
+
+export { newGameRent, listRentals, gameReturn, deleteRent };
