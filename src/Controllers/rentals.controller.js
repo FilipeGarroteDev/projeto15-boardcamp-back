@@ -152,9 +152,6 @@ async function newGameRent(req, res) {
 async function gameReturn(req, res) {
   const { id } = req.params;
   const today = dayjs(Date.now());
-  const yesterday = dayjs('2022-09-30');
-  console.log(today.diff(yesterday));
-  const tomorrow = dayjs('2022-10-02');
 
   try {
     const rental = await connection.query(
@@ -162,17 +159,28 @@ async function gameReturn(req, res) {
       [id]
     );
 
+    if (rental.rows.length === 0) {
+      return res
+        .status(404)
+        .send(
+          'Não existe nenhum aluguel com o id informado.\nPor favor, revise os dados.'
+        );
+    }
+
+    if (rental.rows[0].returnDate !== null) {
+      return res
+        .status(400)
+        .send(
+          `O aluguel referente ao id informado já foi finalizado em ${dayjs(
+            rental.rows[0].returnDate
+          ).format('DD-MM-YYYY')}`
+        );
+    }
+
     const returnDelay = today.diff(
       dayjs(rental.rows[0].rentDate).format('YYYY-MM-DD'),
       'day'
     );
-
-    console.log({
-      returnDelay,
-      retirada: rental.rows[0].rentDate,
-      retiradaFormat: dayjs(rental.rows[0].rentDate).format('YYYY-MM-DD'),
-      today,
-    });
 
     const delayFee =
       (rental.rows[0].originalPrice / rental.rows[0].daysRented) * returnDelay;
