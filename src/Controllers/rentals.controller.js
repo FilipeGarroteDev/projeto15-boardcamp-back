@@ -6,13 +6,76 @@ async function listRentals(req, res) {
   const { customerId, gameId } = req.query;
 
   try {
-    const rentals = await connection.query('SELECT * FROM rentals');
-    const customer = await connection.query(
-      'SELECT * FROM customers WHERE id = $1',
-      [rentals]
+    if (customerId) {
+      const customersRents = await connection.query(
+        'SELECT * FROM rentals WHERE "customerId" = $1',
+        [Number(customerId)]
+      );
+      const customerData = await connection.query(
+        'SELECT id, name FROM customers WHERE id = $1',
+        [Number(customerId)]
+      );
+      const gamesData = await connection.query(
+        `SELECT games.id, games.name, games."categoryId", categories.name AS "categoryName" 
+          FROM games 
+          JOIN categories ON games."categoryId" = categories.id`
+      );
+
+      const completedCustomersRents = customersRents.rows.map((rental) => ({
+        ...rental,
+        customer: customerData.rows[0],
+        game: gamesData.rows.find((game) => game.id === rental.gameId),
+      }));
+
+      return res.status(200).send(completedCustomersRents);
+    }
+
+    if (gameId) {
+      const gamesRents = await connection.query(
+        'SELECT * FROM rentals WHERE "gameId" = $1',
+        [Number(gameId)]
+      );
+      const customersData = await connection.query(
+        'SELECT id, name FROM customers'
+      );
+      const gameData = await connection.query(
+        `SELECT games.id, games.name, games."categoryId", categories.name AS "categoryName" 
+          FROM games 
+          JOIN categories ON games."categoryId" = categories.id
+          WHERE games.id = $1`,
+        [Number(gameId)]
+      );
+
+      const completedGamesRents = gamesRents.rows.map((rental) => ({
+        ...rental,
+        customer: customersData.rows.find(
+          (customer) => customer.id === rental.customerId
+        ),
+        game: gameData.rows[0],
+      }));
+
+      return res.status(200).send(completedGamesRents);
+    }
+
+    const allRentals = await connection.query('SELECT * FROM rentals');
+    const customersData = await connection.query(
+      'SELECT id, name FROM customers'
+    );
+    const gamesData = await connection.query(
+      `SELECT games.id, games.name, games."categoryId", categories.name AS "categoryName" 
+        FROM games 
+        JOIN categories ON games."categoryId" = categories.id`
     );
 
-    return res.status(200).send(customers.rows);
+    const completedRentals = allRentals.rows.map((rental) => ({
+      ...rental,
+      customer: customersData.rows.find(
+        (customer) => customer.id === rental.customerId
+      ),
+      game: gamesData.rows.find((game) => game.id === rental.gameId),
+    }));
+
+    return res.status(200).send(completedRentals);
   } catch (error) {
     return res.status(400).send(error.message);
   }
@@ -85,4 +148,4 @@ async function newGameRent(req, res) {
   }
 }
 
-export { newGameRent };
+export { newGameRent, listRentals };
