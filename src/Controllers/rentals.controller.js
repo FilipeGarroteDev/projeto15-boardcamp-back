@@ -105,10 +105,6 @@ async function newGameRent(req, res) {
       'SELECT * FROM games WHERE id = $1',
       [gameId]
     );
-    const gameRentals = await connection.query(
-      'SELECT * FROM rentals WHERE "gameId" = $1 AND "returnDate" IS null',
-      [gameId]
-    );
 
     if (hasUser.rows.length === 0) {
       return res
@@ -126,7 +122,7 @@ async function newGameRent(req, res) {
         );
     }
 
-    if (gameRentals.rows.length >= hasGame.rows[0].stockTotal) {
+    if (hasGame.rows[0].stockTotal === 0) {
       return res
         .status(400)
         .send(
@@ -142,10 +138,54 @@ async function newGameRent(req, res) {
       [customerId, gameId, rentDate, daysRented, originalPrice]
     );
 
+    await connection.query('UPDATE games SET "stockTotal" = $1 WHERE id = $2', [
+      hasGame.rows[0].stockTotal - 1,
+      gameId,
+    ]);
+
     return res.sendStatus(201);
   } catch (error) {
     res.status(400).send(error.message);
   }
 }
 
-export { newGameRent, listRentals };
+async function gameReturn(req, res) {
+  const { id } = req.params;
+  const today = dayjs(Date.now());
+  const yesterday = dayjs('2022-09-30');
+  console.log(today.diff(yesterday));
+  const tomorrow = dayjs('2022-10-02');
+
+  try {
+    const rental = await connection.query(
+      'SELECT * FROM rentals WHERE id = $1',
+      [id]
+    );
+
+    const returnDelay = today.diff(
+      dayjs(rental.rows[0].rentDate).format('YYYY-MM-DD'),
+      'day'
+    );
+
+    console.log({
+      returnDelay,
+      retirada: rental.rows[0].rentDate,
+      retiradaFormat: dayjs(rental.rows[0].rentDate).format('YYYY-MM-DD'),
+      today,
+    });
+
+    const delayFee =
+      (rental.rows[0].originalPrice / rental.rows[0].daysRented) * returnDelay;
+
+    await connection.query(
+      'UPDATE rentals SET "delayFee" = $1, "returnDate" = $2 WHERE id = $3',
+      [delayFee, today.format('YYYY-MM-DD'), id]
+    );
+
+    return res.sendStatus(201);
+  } catch (error) {
+    return res.status(400).send(error.message);
+  }
+}
+
+export { newGameRent, listRentals, gameReturn };
