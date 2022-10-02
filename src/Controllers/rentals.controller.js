@@ -57,7 +57,18 @@ async function listRentals(req, res) {
       return res.status(200).send(completedGamesRents);
     }
 
-    const allRentals = await connection.query('SELECT * FROM rentals');
+    let allRentals;
+
+    if (Object.keys(req.query).length === 0) {
+      allRentals = await connection.query('SELECT * FROM rentals');
+    } else {
+      const { query, queryComplement } = res.locals;
+      allRentals = await connection.query(
+        `SELECT * FROM rentals ${query}`,
+        queryComplement
+      );
+    }
+
     const customersData = await connection.query(
       'SELECT id, name FROM customers'
     );
