@@ -6,12 +6,21 @@ async function listCustomers(req, res) {
   let customers;
 
   try {
-    cpf
-      ? (customers = await connection.query(
-          'SELECT * FROM customers WHERE cpf ILIKE $1',
-          [`${cpf}%`]
-        ))
-      : (customers = await connection.query('SELECT * FROM customers'));
+    if (Object.keys(req.query).length === 0) {
+      customers = await connection.query('SELECT * FROM customers');
+    } else {
+      const { query, queryComplement } = res.locals;
+      cpf
+        ? (customers = await connection.query(
+            'SELECT * FROM customers WHERE cpf ILIKE $1',
+            [`${cpf}%`]
+          ))
+        : (customers = await connection.query(
+            `SELECT * FROM customers ${query}`,
+            queryComplement
+          ));
+    }
+
     return res.status(200).send(customers.rows);
   } catch (error) {
     return res.status(400).send(error.message);

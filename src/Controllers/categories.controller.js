@@ -1,40 +1,16 @@
 import { connection } from '../db/db.js';
 
-function queries(queryString) {
-  const { offset, limit, order, desc } = queryString;
-  let query, queryComplement;
-
-  if (offset && limit) {
-    query = 'SELECT * FROM categories LIMIT $1 OFFSET $2';
-    queryComplement = [limit, offset];
-    return { query, queryComplement };
-  } else if (offset) {
-    query = 'SELECT * FROM categories OFFSET $1';
-    queryComplement = [offset];
-    return { query, queryComplement };
-  } else if (limit) {
-    query = 'SELECT * FROM categories LIMIT $1';
-    queryComplement = [limit];
-    return { query, queryComplement };
-  }
-
-  if (order && desc) {
-    query = `SELECT * FROM categories ORDER BY ${order} DESC`;
-    return { query };
-  } else if (order) {
-    query = `SELECT * FROM categories ORDER BY ${order}`;
-    return { query };
-  }
-}
-
 async function listCategories(req, res) {
   try {
     if (Object.keys(req.query).length === 0) {
       const categories = await connection.query('SELECT * FROM categories');
       return res.status(200).send(categories.rows);
     } else {
-      const { query, queryComplement } = queries(req.query);
-      const categories = await connection.query(query, queryComplement);
+      const { query, queryComplement } = res.locals;
+      const categories = await connection.query(
+        `SELECT * FROM categories ${query}`,
+        queryComplement
+      );
       return res.status(200).send(categories.rows);
     }
   } catch (error) {
