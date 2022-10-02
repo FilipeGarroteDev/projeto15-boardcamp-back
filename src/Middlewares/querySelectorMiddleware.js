@@ -14,9 +14,9 @@ function querySelectorMiddleware(req, res, next) {
   }
 
   if (order && desc) {
-    query = `ORDER BY ${order} DESC`;
+    query = `ORDER BY "${order}" DESC`;
   } else if (order) {
-    query = `ORDER BY ${order}`;
+    query = `ORDER BY "${order}"`;
   }
 
   res.locals.query = query;
