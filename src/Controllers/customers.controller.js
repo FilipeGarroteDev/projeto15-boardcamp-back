@@ -19,11 +19,23 @@ async function listCustomers(req, res) {
       const { query, queryComplement } = res.locals;
       cpf
         ? (customers = await connection.query(
-            'SELECT * FROM customers WHERE cpf LIKE $1',
+            `SELECT 
+              customers.*, COUNT(rentals."customerId") AS "rentalsCount"
+            FROM customers
+            JOIN rentals
+              ON customers.id = rentals."customerId"
+              WHERE cpf LIKE $1
+            GROUP BY customers.id `,
             [`${cpf}%`]
           ))
         : (customers = await connection.query(
-            `SELECT * FROM customers ${query}`,
+            `SELECT 
+              customers.*, COUNT(rentals."customerId") AS "rentalsCount" 
+            FROM customers 
+            JOIN rentals 
+              ON customers.id = rentals."customerId" 
+            GROUP BY customers.id 
+            ${query}`,
             queryComplement
           ));
     }
