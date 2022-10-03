@@ -8,24 +8,39 @@ async function listGames(req, res) {
   try {
     if (Object.keys(req.query).length === 0) {
       games = await connection.query(
-        `SELECT games.*, categories.name AS "categoryName" 
+        `SELECT 
+          games.*, categories.name AS "categoryName", COUNT(rentals."gameId") AS "rentalsCount"
         FROM games 
-        JOIN categories ON games."categoryId" = categories.id`
+        JOIN categories 
+          ON games."categoryId" = categories.id
+        JOIN rentals
+          ON games.id = rentals."gameId"
+        GROUP BY games.id, categories.name`
       );
     } else {
       const { query, queryComplement } = res.locals;
       name
         ? (games = await connection.query(
-            `SELECT games.*, categories.name AS "categoryName" 
+            `SELECT 
+              games.*, categories.name AS "categoryName", COUNT(rentals."gameId") AS "rentalsCount"
             FROM games 
-            JOIN categories ON games."categoryId" = categories.id 
-            WHERE games.name ILIKE $1`,
+            JOIN categories 
+              ON games."categoryId" = categories.id 
+            JOIN rentals
+              ON games.id = rentals."gameId"
+            WHERE games.name ILIKE $1
+            GROUP BY games.id, categories.name`,
             [`${name}%`]
           ))
         : (games = await connection.query(
-            `SELECT games.*, categories.name AS "categoryName" 
+            `SELECT 
+              games.*, categories.name AS "categoryName", COUNT(rentals."gameId") AS "rentalsCount"
             FROM games 
-            JOIN categories ON games."categoryId" = categories.id 
+            JOIN categories 
+              ON games."categoryId" = categories.id
+            JOIN rentals
+              ON games.id = rentals."gameId"
+            GROUP BY games.id, categories.name 
             ${query}`,
             queryComplement
           ));
