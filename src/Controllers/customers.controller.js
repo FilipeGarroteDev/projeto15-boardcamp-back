@@ -12,7 +12,7 @@ async function listCustomers(req, res) {
       const { query, queryComplement } = res.locals;
       cpf
         ? (customers = await connection.query(
-            'SELECT * FROM customers WHERE cpf ILIKE $1',
+            'SELECT * FROM customers WHERE cpf LIKE $1',
             [`${cpf}%`]
           ))
         : (customers = await connection.query(

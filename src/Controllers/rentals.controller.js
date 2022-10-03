@@ -3,90 +3,129 @@ import { rentSchema } from '../Schemas/rentSchema.js';
 import dayjs from 'dayjs';
 
 async function listRentals(req, res) {
-  const { customerId, gameId } = req.query;
+  const { customerId, gameId, status } = req.query;
 
   try {
     if (customerId) {
-      const customersRents = await connection.query(
-        'SELECT * FROM rentals WHERE "customerId" = $1',
-        [Number(customerId)]
+      const customersRentals = await connection.query(
+        `
+      SELECT
+        rentals.*,
+        json_build_object('id', customers.id, 'name', customers.name) AS customer,
+        json_build_object('id', games.id, 'name', games.name, 'categoryId', games."categoryId", 'categoryName', categories.name) AS game
+      FROM rentals
+        JOIN customers
+          ON rentals."customerId" = customers.id
+        JOIN games
+          ON rentals."gameId" = games.id
+        JOIN categories
+          ON games."categoryId" = categories.id
+      WHERE rentals."customerId" = $1
+      `,
+        [customerId]
       );
-      const customerData = await connection.query(
-        'SELECT id, name FROM customers WHERE id = $1',
-        [Number(customerId)]
-      );
-      const gamesData = await connection.query(
-        `SELECT games.id, games.name, games."categoryId", categories.name AS "categoryName" 
-          FROM games 
-          JOIN categories ON games."categoryId" = categories.id`
-      );
-
-      const completedCustomersRents = customersRents.rows.map((rental) => ({
-        ...rental,
-        customer: customerData.rows[0],
-        game: gamesData.rows.find((game) => game.id === rental.gameId),
-      }));
-
-      return res.status(200).send(completedCustomersRents);
+      return res.status(200).send(customersRentals.rows);
     }
 
     if (gameId) {
-      const gamesRents = await connection.query(
-        'SELECT * FROM rentals WHERE "gameId" = $1',
-        [Number(gameId)]
-      );
-      const customersData = await connection.query(
-        'SELECT id, name FROM customers'
-      );
-      const gameData = await connection.query(
-        `SELECT games.id, games.name, games."categoryId", categories.name AS "categoryName" 
-          FROM games 
-          JOIN categories ON games."categoryId" = categories.id
-          WHERE games.id = $1`,
-        [Number(gameId)]
+      const gamesRentals = await connection.query(
+        `
+      SELECT
+        rentals.*,
+        json_build_object('id', customers.id, 'name', customers.name) AS customer,
+        json_build_object('id', games.id, 'name', games.name, 'categoryId', games."categoryId", 'categoryName', categories.name) AS game
+      FROM rentals
+        JOIN customers
+          ON rentals."customerId" = customers.id
+        JOIN games
+          ON rentals."gameId" = games.id
+        JOIN categories
+          ON games."categoryId" = categories.id
+      WHERE rentals."gameId" = $1
+      `,
+        [gameId]
       );
 
-      const completedGamesRents = gamesRents.rows.map((rental) => ({
-        ...rental,
-        customer: customersData.rows.find(
-          (customer) => customer.id === rental.customerId
-        ),
-        game: gameData.rows[0],
-      }));
-
-      return res.status(200).send(completedGamesRents);
+      return res.status(200).send(gamesRentals.rows);
     }
 
-    let allRentals;
+    if (status === 'open') {
+      const openRentals = await connection.query(
+        `
+      SELECT
+        rentals.*,
+        json_build_object('id', customers.id, 'name', customers.name) AS customer,
+        json_build_object('id', games.id, 'name', games.name, 'categoryId', games."categoryId", 'categoryName', categories.name) AS game
+      FROM rentals
+        JOIN customers
+          ON rentals."customerId" = customers.id
+        JOIN games
+          ON rentals."gameId" = games.id
+        JOIN categories
+          ON games."categoryId" = categories.id
+      WHERE rentals."returnDate" IS NULL
+      `
+      );
+      return res.status(200).send(openRentals.rows);
+    } else if (status === 'closed') {
+      const closedRentals = await connection.query(
+        `
+      SELECT
+        rentals.*,
+        json_build_object('id', customers.id, 'name', customers.name) AS customer,
+        json_build_object('id', games.id, 'name', games.name, 'categoryId', games."categoryId", 'categoryName', categories.name) AS game
+      FROM rentals
+        JOIN customers
+          ON rentals."customerId" = customers.id
+        JOIN games
+          ON rentals."gameId" = games.id
+        JOIN categories
+          ON games."categoryId" = categories.id
+      WHERE rentals."returnDate" IS NOT NULL
+      `
+      );
+      return res.status(200).send(closedRentals.rows);
+    }
 
     if (Object.keys(req.query).length === 0) {
-      allRentals = await connection.query('SELECT * FROM rentals');
+      const allRentals = await connection.query(
+        `
+      SELECT
+        rentals.*,
+        json_build_object('id', customers.id, 'name', customers.name) AS customer,
+        json_build_object('id', games.id, 'name', games.name, 'categoryId', games."categoryId", 'categoryName', categories.name) AS game
+      FROM rentals
+        JOIN customers
+          ON rentals."customerId" = customers.id
+        JOIN games
+          ON rentals."gameId" = games.id
+        JOIN categories
+          ON games."categoryId" = categories.id
+      `
+      );
+
+      return res.status(200).send(allRentals.rows);
     } else {
       const { query, queryComplement } = res.locals;
-      allRentals = await connection.query(
-        `SELECT * FROM rentals ${query}`,
+      const filteredRentals = await connection.query(
+        `
+      SELECT
+        rentals.*,
+        json_build_object('id', customers.id, 'name', customers.name) AS customer,
+        json_build_object('id', games.id, 'name', games.name, 'categoryId', games."categoryId", 'categoryName', categories.name) AS game
+      FROM rentals
+        JOIN customers
+          ON rentals."customerId" = customers.id
+        JOIN games
+          ON rentals."gameId" = games.id
+        JOIN categories
+          ON games."categoryId" = categories.id
+      ${query}
+      `,
         queryComplement
       );
+      return res.status(200).send(filteredRentals.rows);
     }
-
-    const customersData = await connection.query(
-      'SELECT id, name FROM customers'
-    );
-    const gamesData = await connection.query(
-      `SELECT games.id, games.name, games."categoryId", categories.name AS "categoryName" 
-        FROM games 
-        JOIN categories ON games."categoryId" = categories.id`
-    );
-
-    const completedRentals = allRentals.rows.map((rental) => ({
-      ...rental,
-      customer: customersData.rows.find(
-        (customer) => customer.id === rental.customerId
-      ),
-      game: gamesData.rows.find((game) => game.id === rental.gameId),
-    }));
-
-    return res.status(200).send(completedRentals);
   } catch (error) {
     return res.status(400).send(error.message);
   }
