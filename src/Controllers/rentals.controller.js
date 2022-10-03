@@ -276,6 +276,11 @@ async function gameReturn(req, res) {
       [delayFee <= 0 ? 0 : delayFee, today.format('YYYY-MM-DD'), id]
     );
 
+    await connection.query(
+      'UPDATE games SET "stockTotal" = "stockTotal" + 1 WHERE id = $1',
+      [rental.rows[0].gameId]
+    );
+
     return res.sendStatus(201);
   } catch (error) {
     return res.status(400).send(error.message);

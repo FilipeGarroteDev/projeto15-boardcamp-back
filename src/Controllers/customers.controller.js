@@ -9,9 +9,11 @@ async function listCustomers(req, res) {
     if (Object.keys(req.query).length === 0) {
       customers = await connection.query(
         `SELECT 
-          customers.*, TO_CHAR(customers.birthday, 'YYYY-MM-DD') AS birthday, COUNT(rentals."customerId") AS "rentalsCount"
+          customers.*, 
+          TO_CHAR(customers.birthday, 'YYYY-MM-DD') AS birthday, 
+          COUNT(rentals."customerId") AS "rentalsCount"
         FROM customers
-        JOIN rentals
+        LEFT JOIN rentals
           ON customers.id = rentals."customerId"
         GROUP BY customers.id`
       );
@@ -20,9 +22,11 @@ async function listCustomers(req, res) {
       cpf
         ? (customers = await connection.query(
             `SELECT 
-              customers.*, COUNT(rentals."customerId") AS "rentalsCount"
+              customers.*, 
+              TO_CHAR(customers.birthday, 'YYYY-MM-DD') AS birthday,
+              COUNT(rentals."customerId") AS "rentalsCount"
             FROM customers
-            JOIN rentals
+            LEFT JOIN rentals
               ON customers.id = rentals."customerId"
               WHERE cpf LIKE $1
             GROUP BY customers.id `,
@@ -30,9 +34,11 @@ async function listCustomers(req, res) {
           ))
         : (customers = await connection.query(
             `SELECT 
-              customers.*, COUNT(rentals."customerId") AS "rentalsCount" 
+              customers.*, 
+              TO_CHAR(customers.birthday, 'YYYY-MM-DD') AS birthday,
+              COUNT(rentals."customerId") AS "rentalsCount" 
             FROM customers 
-            JOIN rentals 
+            LEFT JOIN rentals 
               ON customers.id = rentals."customerId" 
             GROUP BY customers.id 
             ${query}`,
@@ -54,9 +60,9 @@ async function listSpecificUser(req, res) {
       `SELECT 
         customers.*, 
         TO_CHAR(customers.birthday, 'YYYY-MM-DD') AS birthday,
-        COUNT(rentals."customerId")
+        COUNT(rentals."customerId") AS "rentalsCount"
       FROM customers
-      JOIN rentals
+      LEFT JOIN rentals
         ON customers.id = rentals."customerId" 
       WHERE customers.id = $1
       GROUP BY customers.id`,

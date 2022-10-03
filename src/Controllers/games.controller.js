@@ -13,7 +13,7 @@ async function listGames(req, res) {
         FROM games 
         JOIN categories 
           ON games."categoryId" = categories.id
-        JOIN rentals
+        LEFT JOIN rentals
           ON games.id = rentals."gameId"
         GROUP BY games.id, categories.name`
       );
@@ -26,7 +26,7 @@ async function listGames(req, res) {
             FROM games 
             JOIN categories 
               ON games."categoryId" = categories.id 
-            JOIN rentals
+            LEFT JOIN rentals
               ON games.id = rentals."gameId"
             WHERE games.name ILIKE $1
             GROUP BY games.id, categories.name`,
@@ -38,7 +38,7 @@ async function listGames(req, res) {
             FROM games 
             JOIN categories 
               ON games."categoryId" = categories.id
-            JOIN rentals
+            LEFT JOIN rentals
               ON games.id = rentals."gameId"
             GROUP BY games.id, categories.name 
             ${query}`,
