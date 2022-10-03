@@ -8,5 +8,6 @@ router.post('/rentals', rentalsController.newGameRent);
 router.post('/rentals/:id/return', rentalsController.gameReturn);
 router.delete('/rentals/:id', rentalsController.deleteRent);
 router.get('/rentals', querySelectorMiddleware, rentalsController.listRentals);
+router.get('/rentals/metrics', rentalsController.getMetrics);
 
 export default router;

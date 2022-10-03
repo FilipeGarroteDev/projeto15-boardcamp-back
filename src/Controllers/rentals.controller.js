@@ -222,7 +222,7 @@ async function newGameRent(req, res) {
 
 async function gameReturn(req, res) {
   const { id } = req.params;
-  const today = dayjs(Date.now());
+  const today = dayjs('2022-10-10');
 
   try {
     const rental = await connection.query(
@@ -254,11 +254,12 @@ async function gameReturn(req, res) {
     );
 
     const delayFee =
-      (rental.rows[0].originalPrice / rental.rows[0].daysRented) * returnDelay;
+      (rental.rows[0].originalPrice / rental.rows[0].daysRented) *
+      (returnDelay - rental.rows[0].daysRented);
 
     await connection.query(
       'UPDATE rentals SET "delayFee" = $1, "returnDate" = $2 WHERE id = $3',
-      [delayFee, today.format('YYYY-MM-DD'), id]
+      [delayFee <= 0 ? 0 : delayFee, today.format('YYYY-MM-DD'), id]
     );
 
     return res.sendStatus(201);
@@ -299,4 +300,30 @@ async function deleteRent(req, res) {
   }
 }
 
-export { newGameRent, listRentals, gameReturn, deleteRent };
+async function getMetrics(req, res) {
+  try {
+    const originalPriceSum = await connection.query(
+      'SELECT SUM("originalPrice") FROM rentals'
+    );
+    const delayFeeSum = await connection.query(
+      'SELECT SUM("delayFee") FROM rentals'
+    );
+    const rentalsCount = await connection.query(
+      'SELECT COUNT(id) FROM rentals'
+    );
+
+    const revenue =
+      Number(originalPriceSum.rows[0].sum) + Number(delayFeeSum.rows[0].sum);
+    const rentals = Number(rentalsCount.rows[0].count);
+
+    return res.status(200).send({
+      revenue,
+      rentals,
+      average: revenue / rentals,
+    });
+  } catch (error) {
+    return res.status(400).send(error.message);
+  }
+}
+
+export { newGameRent, listRentals, gameReturn, deleteRent, getMetrics };
