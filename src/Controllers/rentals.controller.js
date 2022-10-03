@@ -10,7 +10,9 @@ async function listRentals(req, res) {
       const customersRentals = await connection.query(
         `
       SELECT
-        rentals.*, TO_CHAR(rentals."rentDate", 'YYYY-MM-DD') AS "rentDate",
+        rentals.*, 
+        TO_CHAR(rentals."rentDate", 'YYYY-MM-DD') AS "rentDate",
+        TO_CHAR(rentals."returnDate", 'YYYY-MM-DD') AS "returnDate",
         json_build_object('id', customers.id, 'name', customers.name) AS customer,
         json_build_object('id', games.id, 'name', games.name, 'categoryId', games."categoryId", 'categoryName', categories.name) AS game
       FROM rentals
@@ -31,7 +33,9 @@ async function listRentals(req, res) {
       const gamesRentals = await connection.query(
         `
       SELECT
-        rentals.*, TO_CHAR(rentals."rentDate", 'YYYY-MM-DD') AS "rentDate",
+        rentals.*, 
+        TO_CHAR(rentals."rentDate", 'YYYY-MM-DD') AS "rentDate",
+        TO_CHAR(rentals."returnDate", 'YYYY-MM-DD') AS "returnDate",
         json_build_object('id', customers.id, 'name', customers.name) AS customer,
         json_build_object('id', games.id, 'name', games.name, 'categoryId', games."categoryId", 'categoryName', categories.name) AS game
       FROM rentals
@@ -53,7 +57,9 @@ async function listRentals(req, res) {
       const openRentals = await connection.query(
         `
       SELECT
-        rentals.*, TO_CHAR(rentals."rentDate", 'YYYY-MM-DD') AS "rentDate",
+        rentals.*, 
+        TO_CHAR(rentals."rentDate", 'YYYY-MM-DD') AS "rentDate",
+        TO_CHAR(rentals."returnDate", 'YYYY-MM-DD') AS "returnDate",
         json_build_object('id', customers.id, 'name', customers.name) AS customer,
         json_build_object('id', games.id, 'name', games.name, 'categoryId', games."categoryId", 'categoryName', categories.name) AS game
       FROM rentals
@@ -71,7 +77,9 @@ async function listRentals(req, res) {
       const closedRentals = await connection.query(
         `
       SELECT
-        rentals.*, TO_CHAR(rentals."rentDate", 'YYYY-MM-DD') AS "rentDate",
+        rentals.*, 
+        TO_CHAR(rentals."rentDate", 'YYYY-MM-DD') AS "rentDate",
+        TO_CHAR(rentals."returnDate", 'YYYY-MM-DD') AS "returnDate",
         json_build_object('id', customers.id, 'name', customers.name) AS customer,
         json_build_object('id', games.id, 'name', games.name, 'categoryId', games."categoryId", 'categoryName', categories.name) AS game
       FROM rentals
@@ -91,7 +99,9 @@ async function listRentals(req, res) {
       const openRentals = await connection.query(
         `
       SELECT
-        rentals.*, TO_CHAR(rentals."rentDate", 'YYYY-MM-DD') AS "rentDate",
+        rentals.*, 
+        TO_CHAR(rentals."rentDate", 'YYYY-MM-DD') AS "rentDate",
+        TO_CHAR(rentals."returnDate", 'YYYY-MM-DD') AS "returnDate",
         json_build_object('id', customers.id, 'name', customers.name) AS customer,
         json_build_object('id', games.id, 'name', games.name, 'categoryId', games."categoryId", 'categoryName', categories.name) AS game
       FROM rentals
@@ -112,7 +122,9 @@ async function listRentals(req, res) {
       const allRentals = await connection.query(
         `
       SELECT
-        rentals.*, TO_CHAR(rentals."rentDate", 'YYYY-MM-DD') AS "rentDate",
+        rentals.*, 
+        TO_CHAR(rentals."rentDate", 'YYYY-MM-DD') AS "rentDate",
+        TO_CHAR(rentals."returnDate", 'YYYY-MM-DD') AS "returnDate",
         json_build_object('id', customers.id, 'name', customers.name) AS customer,
         json_build_object('id', games.id, 'name', games.name, 'categoryId', games."categoryId", 'categoryName', categories.name) AS game
       FROM rentals
@@ -131,7 +143,9 @@ async function listRentals(req, res) {
       const filteredRentals = await connection.query(
         `
       SELECT
-        rentals.*, TO_CHAR(rentals."rentDate", 'YYYY-MM-DD') AS "rentDate",
+        rentals.*, 
+        TO_CHAR(rentals."rentDate", 'YYYY-MM-DD') AS "rentDate",
+        TO_CHAR(rentals."returnDate", 'YYYY-MM-DD') AS "returnDate",
         json_build_object('id', customers.id, 'name', customers.name) AS customer,
         json_build_object('id', games.id, 'name', games.name, 'categoryId', games."categoryId", 'categoryName', categories.name) AS game
       FROM rentals
