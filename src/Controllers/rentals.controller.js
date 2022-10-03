@@ -222,7 +222,7 @@ async function newGameRent(req, res) {
 
 async function gameReturn(req, res) {
   const { id } = req.params;
-  const today = dayjs('2022-10-10');
+  const today = dayjs(Date.now());
 
   try {
     const rental = await connection.query(
@@ -301,25 +301,60 @@ async function deleteRent(req, res) {
 }
 
 async function getMetrics(req, res) {
+  const { startDate, endDate } = req.query;
+  let inflowMetrics;
+
   try {
-    const originalPriceSum = await connection.query(
-      'SELECT SUM("originalPrice") FROM rentals'
-    );
-    const delayFeeSum = await connection.query(
-      'SELECT SUM("delayFee") FROM rentals'
-    );
-    const rentalsCount = await connection.query(
-      'SELECT COUNT(id) FROM rentals'
-    );
+    if (startDate && endDate) {
+      inflowMetrics = await connection.query(
+        `SELECT 
+          SUM("originalPrice") AS "originalPriceSum",
+          SUM("delayFee") AS "delayFeeSum",
+          COUNT(id) AS "rentalsTotal"
+        FROM rentals
+        WHERE "rentDate" >= $1 AND "rentDate" <= $2`,
+        [startDate, endDate]
+      );
+    } else if (startDate) {
+      inflowMetrics = await connection.query(
+        `SELECT 
+          SUM("originalPrice") AS "originalPriceSum",
+          SUM("delayFee") AS "delayFeeSum",
+          COUNT(id) AS "rentalsTotal"
+        FROM rentals
+        WHERE "rentDate" >= $1`,
+        [startDate]
+      );
+    } else if (endDate) {
+      inflowMetrics = await connection.query(
+        `SELECT 
+          SUM("originalPrice") AS "originalPriceSum",
+          SUM("delayFee") AS "delayFeeSum",
+          COUNT(id) AS "rentalsTotal"
+        FROM rentals
+        WHERE "rentDate" <= $1`,
+        [endDate]
+      );
+    } else {
+      inflowMetrics = await connection.query(
+        `SELECT 
+          SUM("originalPrice") AS "originalPriceSum",
+          SUM("delayFee") AS "delayFeeSum",
+          COUNT(id) AS "rentalsTotal"
+        FROM rentals`
+      );
+    }
 
     const revenue =
-      Number(originalPriceSum.rows[0].sum) + Number(delayFeeSum.rows[0].sum);
-    const rentals = Number(rentalsCount.rows[0].count);
+      Number(inflowMetrics.rows[0].originalPriceSum) +
+      Number(inflowMetrics.rows[0].delayFeeSum);
+    const rentals = Number(inflowMetrics.rows[0].rentalsTotal);
 
     return res.status(200).send({
       revenue,
       rentals,
-      average: revenue / rentals,
+      average:
+        revenue === 0 || rentals === 0 ? 0 : Math.floor(revenue / rentals),
     });
   } catch (error) {
     return res.status(400).send(error.message);
