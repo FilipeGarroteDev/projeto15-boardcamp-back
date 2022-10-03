@@ -1,5 +1,4 @@
 import { connection } from '../db/db.js';
-import { customerSchema } from '../Schemas/customerSchema.js';
 
 async function listCustomers(req, res) {
   const { cpf } = req.query;
@@ -83,18 +82,6 @@ async function listSpecificUser(req, res) {
 
 async function createCustomer(req, res) {
   const { name, phone, cpf, birthday } = req.body;
-  const validation = customerSchema.validate(req.body, { abortEarly: false });
-
-  if (validation.error) {
-    const errors = validation.error.details
-      .map((error) => error.message)
-      .join('\n');
-    return res
-      .status(400)
-      .send(
-        `Por gentileza, revise os campos preenchidos. Ocorreram os seguintes erros:\n\n${errors}`
-      );
-  }
 
   try {
     const hasUser = await connection.query(
@@ -123,19 +110,7 @@ async function createCustomer(req, res) {
 
 async function updateUserData(req, res) {
   const { name, phone, cpf, birthday } = req.body;
-  const validation = customerSchema.validate(req.body, { abortEarly: false });
   const { id } = req.params;
-
-  if (validation.error) {
-    const errors = validation.error.details
-      .map((error) => error.message)
-      .join('\n');
-    return res
-      .status(400)
-      .send(
-        `Por gentileza, revise os campos preenchidos. Ocorreram os seguintes erros:\n\n${errors}`
-      );
-  }
 
   try {
     const hasUser = await connection.query(
