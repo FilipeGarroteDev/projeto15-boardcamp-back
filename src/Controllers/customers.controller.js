@@ -7,7 +7,14 @@ async function listCustomers(req, res) {
 
   try {
     if (Object.keys(req.query).length === 0) {
-      customers = await connection.query('SELECT * FROM customers');
+      customers = await connection.query(
+        `SELECT 
+          customers.*, COUNT(rentals."customerId") AS "rentalsCount"
+        FROM customers
+        JOIN rentals
+          ON customers.id = rentals."customerId"
+        GROUP BY customers.id`
+      );
     } else {
       const { query, queryComplement } = res.locals;
       cpf
