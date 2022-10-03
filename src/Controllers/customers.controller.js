@@ -9,7 +9,7 @@ async function listCustomers(req, res) {
     if (Object.keys(req.query).length === 0) {
       customers = await connection.query(
         `SELECT 
-          customers.*, COUNT(rentals."customerId") AS "rentalsCount"
+          customers.*, TO_CHAR(customers.birthday, 'YYYY-MM-DD') AS birthday, COUNT(rentals."customerId") AS "rentalsCount"
         FROM customers
         JOIN rentals
           ON customers.id = rentals."customerId"
@@ -51,7 +51,15 @@ async function listSpecificUser(req, res) {
 
   try {
     const customer = await connection.query(
-      'SELECT * FROM customers WHERE id = $1',
+      `SELECT 
+        customers.*, 
+        TO_CHAR(customers.birthday, 'YYYY-MM-DD') AS birthday,
+        COUNT(rentals."customerId")
+      FROM customers
+      JOIN rentals
+        ON customers.id = rentals."customerId" 
+      WHERE customers.id = $1
+      GROUP BY customers.id`,
       [Number(id)]
     );
 
