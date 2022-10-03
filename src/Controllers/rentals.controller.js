@@ -3,14 +3,14 @@ import { rentSchema } from '../Schemas/rentSchema.js';
 import dayjs from 'dayjs';
 
 async function listRentals(req, res) {
-  const { customerId, gameId, status } = req.query;
+  const { customerId, gameId, status, startDate } = req.query;
 
   try {
     if (customerId) {
       const customersRentals = await connection.query(
         `
       SELECT
-        rentals.*,
+        rentals.*, TO_CHAR(rentals."rentDate", 'YYYY-MM-DD') AS "rentDate",
         json_build_object('id', customers.id, 'name', customers.name) AS customer,
         json_build_object('id', games.id, 'name', games.name, 'categoryId', games."categoryId", 'categoryName', categories.name) AS game
       FROM rentals
@@ -31,7 +31,7 @@ async function listRentals(req, res) {
       const gamesRentals = await connection.query(
         `
       SELECT
-        rentals.*,
+        rentals.*, TO_CHAR(rentals."rentDate", 'YYYY-MM-DD') AS "rentDate",
         json_build_object('id', customers.id, 'name', customers.name) AS customer,
         json_build_object('id', games.id, 'name', games.name, 'categoryId', games."categoryId", 'categoryName', categories.name) AS game
       FROM rentals
@@ -53,7 +53,7 @@ async function listRentals(req, res) {
       const openRentals = await connection.query(
         `
       SELECT
-        rentals.*,
+        rentals.*, TO_CHAR(rentals."rentDate", 'YYYY-MM-DD') AS "rentDate",
         json_build_object('id', customers.id, 'name', customers.name) AS customer,
         json_build_object('id', games.id, 'name', games.name, 'categoryId', games."categoryId", 'categoryName', categories.name) AS game
       FROM rentals
@@ -71,7 +71,7 @@ async function listRentals(req, res) {
       const closedRentals = await connection.query(
         `
       SELECT
-        rentals.*,
+        rentals.*, TO_CHAR(rentals."rentDate", 'YYYY-MM-DD') AS "rentDate",
         json_build_object('id', customers.id, 'name', customers.name) AS customer,
         json_build_object('id', games.id, 'name', games.name, 'categoryId', games."categoryId", 'categoryName', categories.name) AS game
       FROM rentals
@@ -87,11 +87,32 @@ async function listRentals(req, res) {
       return res.status(200).send(closedRentals.rows);
     }
 
+    if (startDate) {
+      const openRentals = await connection.query(
+        `
+      SELECT
+        rentals.*, TO_CHAR(rentals."rentDate", 'YYYY-MM-DD') AS "rentDate",
+        json_build_object('id', customers.id, 'name', customers.name) AS customer,
+        json_build_object('id', games.id, 'name', games.name, 'categoryId', games."categoryId", 'categoryName', categories.name) AS game
+      FROM rentals
+        JOIN customers
+          ON rentals."customerId" = customers.id
+        JOIN games
+          ON rentals."gameId" = games.id
+        JOIN categories
+          ON games."categoryId" = categories.id
+      WHERE rentals."rentDate" >= $1
+      `,
+        [startDate]
+      );
+      return res.status(200).send(openRentals.rows);
+    }
+
     if (Object.keys(req.query).length === 0) {
       const allRentals = await connection.query(
         `
       SELECT
-        rentals.*,
+        rentals.*, TO_CHAR(rentals."rentDate", 'YYYY-MM-DD') AS "rentDate",
         json_build_object('id', customers.id, 'name', customers.name) AS customer,
         json_build_object('id', games.id, 'name', games.name, 'categoryId', games."categoryId", 'categoryName', categories.name) AS game
       FROM rentals
@@ -110,7 +131,7 @@ async function listRentals(req, res) {
       const filteredRentals = await connection.query(
         `
       SELECT
-        rentals.*,
+        rentals.*, TO_CHAR(rentals."rentDate", 'YYYY-MM-DD') AS "rentDate",
         json_build_object('id', customers.id, 'name', customers.name) AS customer,
         json_build_object('id', games.id, 'name', games.name, 'categoryId', games."categoryId", 'categoryName', categories.name) AS game
       FROM rentals
